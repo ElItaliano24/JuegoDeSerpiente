@@ -22,6 +22,11 @@ const ctx = canvas.getContext("2d")
 // Tamaño de cada celda
 const celda = canvas.width / columnas
 
+// Leer el puntaje maximo inicial
+let puntajeMaximo = parseInt(localStorage.getItem("puntajeMaximo")) || 0
+// Mostrar el puntaje maximo en el HTML
+const conteoPuntajeMaximo = document.getElementById("record")
+conteoPuntajeMaximo.textContent = puntajeMaximo
 // Dibujar el tablero tipo ajedrez
 function dibujarTablero() {
     for (let fila = 0; fila < filas; fila++) {
@@ -77,10 +82,19 @@ function actualizarPosicionSerpiente() {
     snakeX[0] += dirX;
     snakeY[0] += dirY;
 
+    const conteoPuntaje = document.getElementById("puntaje");
+
     // ¿La serpiente se come la comida?
     if (snakeX[0] === comidaX && snakeY[0] === comidaY) {
         tamaño++;       // La serpiente crece
         puntaje++;      // Aumenta el puntaje
+        //Ajustar velocidad
+        velocidad = Math.max(100, 400 - puntaje * 20)
+        // Reiniciar el intervalo con la nueva velocidad
+        clearInterval(intervalo);
+        intervalo = setInterval(actualizarPosicionSerpiente, velocidad);
+        conteoPuntaje.textContent = puntaje
+        actualizarPuntajeMaximo()
         generarComida(); // Nueva comida
     }
 
@@ -95,10 +109,30 @@ function actualizarPosicionSerpiente() {
         return; // Evita que siga ejecutando el resto
     }
 
+    // ¿Se muerde la cola?
+    for (let i = 1; i < tamaño; i++) {
+        if (snakeX[0] === snakeX[i] && snakeY[0] === snakeY[i]) {
+            clearInterval(intervalo);
+            actualizarPuntajeMaximo()
+            alert("💥 ¡Te mordiste a ti mismo! Game over.");
+            location.reload();
+            return;
+        }
+    }
+
+
     // Redibujar tablero y serpiente
     dibujarTablero();
     dibujarSerpiente();
     dibujarComida();
+}
+
+function actualizarPuntajeMaximo() {
+    if (puntaje > puntajeMaximo) {
+        puntajeMaximo = puntaje;
+        localStorage.setItem("puntajeMaximo", puntajeMaximo);
+        conteoPuntajeMaximo.textContent = puntajeMaximo; // Actualiza el HTML
+    }
 }
 
 let intervalo = null; // aún no comienza el juego
