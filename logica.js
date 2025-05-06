@@ -99,7 +99,7 @@ function actualizarPosicionSerpiente() {
             x: snakeX[tamaño - 1],
             y: snakeY[tamaño - 1]
         }
-        tamaño++;  
+        tamaño++;
         posicionesPrevias.push(colaAnterior)     // La serpiente crece
         puntaje++;      // Aumenta el puntaje
         //Ajustar velocidad
@@ -177,40 +177,14 @@ function mover(direccion) {
 
 }
 
-// Controles de flechas
-document.addEventListener("keydown", function (event) {
-    // Iniciar el movimiento con la primera tecla
-    if (!iniciado) {
-        iniciado = true;
-        requestAnimationFrame(bucleAnimacion); // Inicia la animación
-    }
-
-    switch (event.key) {
-        case "ArrowUp":
-            if (dirY !== 1) {
-                dirX = 0;
-                dirY = -1;
-            }
-            break;
-        case "ArrowDown":
-            if (dirY !== -1) {
-                dirX = 0;
-                dirY = 1;
-            }
-            break;
-        case "ArrowLeft":
-            if (dirX !== 1) {
-                dirX = -1;
-                dirY = 0;
-            }
-            break;
-        case "ArrowRight":
-            if (dirX !== -1) {
-                dirX = 1;
-                dirY = 0;
-            }
-            break;
-    }
+document.addEventListener("keydown", event => {
+    const mapa = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right"
+    };
+    if (mapa[event.key]) mover(mapa[event.key]);
 });
 
 document.querySelectorAll('#controles-tactiles button').forEach(btn => {
