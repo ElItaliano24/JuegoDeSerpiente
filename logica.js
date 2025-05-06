@@ -144,30 +144,30 @@ let intervalo = null; // aún no comienza el juego
 let iniciado = false; // bandera para detectar primer movimiento
 
 function mover(direccion) {
-    if (iniciado) {
+    if (!iniciado) {
         iniciado = true;
         requestAnimationFrame(bucleAnimacion); // Inicia la animación
     }
     switch (direccion) {
-        case "arriba":
+        case "up":
             if (dirY !== 1) {
                 dirX = 0;
                 dirY = -1;
             }
             break;
-        case "abajo":
+        case "down":
             if (dirY !== -1) {
                 dirX = 0;
                 dirY = 1;
             }
             break;
-        case "izquierda":
+        case "left":
             if (dirX !== 1) {
                 dirX = -1;
                 dirY = 0;
             }
             break;
-        case "derecha":
+        case "right":
             if (dirX !== -1) {
                 dirX = 1;
                 dirY = 0;
