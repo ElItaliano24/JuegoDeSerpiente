@@ -10,7 +10,7 @@ let tiempoUltimoMovimiento = 0 // Tiempo del último movimiento
 let intervaloMovimiento = velocidad // Intervalo de movimiento
 let progresoAnimacion = 1 // Progreso de la animación
 let posicionesPrevias = [] // Almacena las posiciones previas de la serpiente
-
+let juegoTerminado = false // Bandera para indicar si el juego ha terminado
 // Arreglos para la serpiente
 let snakeX = []
 let snakeY = []
@@ -116,6 +116,7 @@ function actualizarPosicionSerpiente() {
         snakeX[0] < 0 || snakeX[0] >= columnas ||
         snakeY[0] < 0 || snakeY[0] >= filas
     ) {
+        juegoTerminado = true; // Cambia el estado del juego
         alert("💀 ¡Perdiste! La serpiente se salió del tablero.");
         location.reload(); // Reinicia el juego
         return; // Evita que siga ejecutando el resto
@@ -124,6 +125,7 @@ function actualizarPosicionSerpiente() {
     // ¿Se muerde la cola?
     for (let i = 1; i < tamaño; i++) {
         if (snakeX[0] === snakeX[i] && snakeY[0] === snakeY[i]) {
+            juegoTerminado = true; // Cambia el estado del juego
             actualizarPuntajeMaximo()
             alert("💥 ¡Te mordiste a ti mismo! Game over.");
             location.reload();
@@ -144,6 +146,8 @@ let intervalo = null; // aún no comienza el juego
 let iniciado = false; // bandera para detectar primer movimiento
 
 function mover(direccion) {
+    console.log("mover→", direccion);
+
     if (!iniciado) {
         iniciado = true;
         requestAnimationFrame(bucleAnimacion); // Inicia la animación
@@ -194,6 +198,7 @@ document.querySelectorAll('#controles-tactiles button').forEach(btn => {
 });
 
 function bucleAnimacion(timestamp) {
+    if(juegoTerminado) return; // Si el juego ha terminado, no continuar
     if (!tiempoUltimoMovimiento) tiempoUltimoMovimiento = timestamp;
 
     const delta = timestamp - tiempoUltimoMovimiento;
