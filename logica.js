@@ -6,6 +6,10 @@ let tamaño = 1 // tamaño de la serpiente
 let puntaje = 0
 let comidaX = 0
 let comidaY = 0
+let tiempoUltimoMovimiento = 0 // Tiempo del último movimiento
+let intervaloMovimiento = velocidad // Intervalo de movimiento
+let progresoAnimacion = 1 // Progreso de la animación
+let posicionesPrevias = [] // Almacena las posiciones previas de la serpiente
 
 // Arreglos para la serpiente
 let snakeX = []
@@ -14,6 +18,10 @@ let snakeY = []
 // Posición inicial de la serpiente al centro del tablero
 snakeX[0] = Math.floor(columnas / 2);
 snakeY[0] = Math.floor(filas / 2);
+
+for (let i = 0; i < tamaño; i++) {
+    posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] }
+}
 
 // Acceder al canvas y su contexto
 const canvas = document.getElementById("miCanvas")
@@ -86,13 +94,18 @@ function actualizarPosicionSerpiente() {
 
     // ¿La serpiente se come la comida?
     if (snakeX[0] === comidaX && snakeY[0] === comidaY) {
-        tamaño++;       // La serpiente crece
+
+        let colaAnterior = {
+            x: snakeX[tamaño - 1],
+            y: snakeY[tamaño - 1]
+        }
+        tamaño++;  
+        posicionesPrevias.push(colaAnterior)     // La serpiente crece
         puntaje++;      // Aumenta el puntaje
         //Ajustar velocidad
         velocidad = Math.max(100, 400 - puntaje * 20)
         // Reiniciar el intervalo con la nueva velocidad
-        clearInterval(intervalo);
-        intervalo = setInterval(actualizarPosicionSerpiente, velocidad);
+        intervaloMovimiento = velocidad
         conteoPuntaje.textContent = puntaje
         actualizarPuntajeMaximo()
         generarComida(); // Nueva comida
@@ -103,7 +116,6 @@ function actualizarPosicionSerpiente() {
         snakeX[0] < 0 || snakeX[0] >= columnas ||
         snakeY[0] < 0 || snakeY[0] >= filas
     ) {
-        clearInterval(intervalo); // 💥 Detener el movimiento
         alert("💀 ¡Perdiste! La serpiente se salió del tablero.");
         location.reload(); // Reinicia el juego
         return; // Evita que siga ejecutando el resto
@@ -112,19 +124,12 @@ function actualizarPosicionSerpiente() {
     // ¿Se muerde la cola?
     for (let i = 1; i < tamaño; i++) {
         if (snakeX[0] === snakeX[i] && snakeY[0] === snakeY[i]) {
-            clearInterval(intervalo);
             actualizarPuntajeMaximo()
             alert("💥 ¡Te mordiste a ti mismo! Game over.");
             location.reload();
             return;
         }
     }
-
-
-    // Redibujar tablero y serpiente
-    dibujarTablero();
-    dibujarSerpiente();
-    dibujarComida();
 }
 
 function actualizarPuntajeMaximo() {
@@ -142,8 +147,8 @@ let iniciado = false; // bandera para detectar primer movimiento
 document.addEventListener("keydown", function (event) {
     // Iniciar el movimiento con la primera tecla
     if (!iniciado) {
-        intervalo = setInterval(actualizarPosicionSerpiente, velocidad);
         iniciado = true;
+        requestAnimationFrame(bucleAnimacion); // Inicia la animación
     }
 
     switch (event.key) {
@@ -173,3 +178,35 @@ document.addEventListener("keydown", function (event) {
             break;
     }
 });
+
+function bucleAnimacion(timestamp) {
+    if (!tiempoUltimoMovimiento) tiempoUltimoMovimiento = timestamp;
+
+    const delta = timestamp - tiempoUltimoMovimiento;
+    progresoAnimacion = Math.min(delta / intervaloMovimiento, 1);
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dibujarTablero();
+    dibujarComida();
+
+    ctx.fillStyle = "#007F00";
+    for (let i = 0; i < tamaño; i++) {
+        const prev = posicionesPrevias[i];
+        const curr = { x: snakeX[i], y: snakeY[i] };
+        const xInt = prev.x + (curr.x - prev.x) * progresoAnimacion;
+        const yInt = prev.y + (curr.y - prev.y) * progresoAnimacion;
+        ctx.fillRect(xInt * celda, yInt * celda, celda, celda);
+    }
+
+    if (delta >= intervaloMovimiento) {
+        // 1) guardo estado “previo”
+        for (let i = 0; i < tamaño; i++) {
+            posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] };
+        }
+        // 2) muevo la lógica de la serpiente
+        actualizarPosicionSerpiente();
+        // 3) reinicio el tiempo
+        tiempoUltimoMovimiento = timestamp;
+    }
+    requestAnimationFrame(bucleAnimacion);
+} 
