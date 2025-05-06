@@ -143,6 +143,40 @@ function actualizarPuntajeMaximo() {
 let intervalo = null; // aún no comienza el juego
 let iniciado = false; // bandera para detectar primer movimiento
 
+function mover(direccion) {
+    if (iniciado) {
+        iniciado = true;
+        requestAnimationFrame(bucleAnimacion); // Inicia la animación
+    }
+    switch (direccion) {
+        case "arriba":
+            if (dirY !== 1) {
+                dirX = 0;
+                dirY = -1;
+            }
+            break;
+        case "abajo":
+            if (dirY !== -1) {
+                dirX = 0;
+                dirY = 1;
+            }
+            break;
+        case "izquierda":
+            if (dirX !== 1) {
+                dirX = -1;
+                dirY = 0;
+            }
+            break;
+        case "derecha":
+            if (dirX !== -1) {
+                dirX = 1;
+                dirY = 0;
+            }
+            break;
+    }
+
+}
+
 // Controles de flechas
 document.addEventListener("keydown", function (event) {
     // Iniciar el movimiento con la primera tecla
@@ -177,6 +211,12 @@ document.addEventListener("keydown", function (event) {
             }
             break;
     }
+});
+
+document.querySelectorAll('#controles-tactiles button').forEach(btn => {
+    btn.addEventListener('click', () => {
+        mover(btn.dataset.dir);
+    });
 });
 
 function bucleAnimacion(timestamp) {

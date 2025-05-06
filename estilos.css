@@ -13,22 +13,34 @@ body {
     align-items: center;
 }
 
+#miCanvas {
+    width: 90vw;
+    height: 90vw;
+    max-width: 600px;
+    max-height: 600px;
+
+    display: block;
+}
+
 #pizarra {
     background-color: #4A752D;
-    width: 700px;
+    width: 100%;
     height: 60px;
     margin-bottom: 30px;
     display: flex;
     justify-content: center;
 }
 
-.seccion_puntaje, .seccion_record {
+.seccion_puntaje,
+.seccion_record {
     display: flex;
     height: 100%;
     justify-content: center;
     align-items: center;
 }
-#puntaje, #record {
+
+#puntaje,
+#record {
     color: white;
     font-size: 40px;
     font-weight: bold;
@@ -37,4 +49,41 @@ body {
 
 .seccion_record {
     margin-left: 20px;
+}
+
+#controles-tactiles {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#controles-tactiles button {
+    font-size: 2rem;
+    margin: 5px;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: #4A752D;
+}
+
+#controles-tactiles > div > button:first-child {
+    margin-right: 60px;
+}
+
+@media (max-width: 480px) {
+    #miCanvas {
+        width: 95vw;
+        height: 95vw;
+    }
+}
+
+@media (min-width:1024px) {
+    #pizarra {
+        width: 700px;
+    }
+
+    #controles-tactiles {
+        display: none;
+    }
 }
