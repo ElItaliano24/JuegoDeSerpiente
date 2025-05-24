@@ -14,6 +14,10 @@ let juegoTerminado = false // Bandera para indicar si el juego ha terminado
 // Arreglos para la serpiente
 let snakeX = []
 let snakeY = []
+let tiempoInicioRespiracion = null
+
+const imagenDeManzana = new Image();
+imagenDeManzana.src = "imgs/manzana.png";
 
 // Posición inicial de la serpiente al centro del tablero
 snakeX[0] = Math.floor(columnas / 2);
@@ -61,16 +65,26 @@ function dibujarSerpiente() {
 
 dibujarSerpiente()
 generarComida();
-dibujarComida();
 
 function generarComida() {
     comidaX = Math.floor(Math.random() * columnas);
     comidaY = Math.floor(Math.random() * filas);
 }
 
-function dibujarComida() {
-    ctx.fillStyle = "#FF0000"; // Rojo
-    ctx.fillRect(comidaX * celda, comidaY * celda, celda, celda);
+function dibujarComida(escala) {
+    const w = celda * escala
+    const h = celda * escala
+
+    const x = comidaX * celda + (celda - w) / 2
+    const y = comidaY * celda + (celda - h) / 2
+
+    if(!imagenDeManzana.complete) {
+        ctx.fillStyle = "#FF0000"; // Rojo
+        ctx.fillRect(comidaX * celda, comidaY * celda, celda, celda);
+        return
+    }
+
+    ctx.drawImage(imagenDeManzana, x, y, w, h);    
 }
 
 // Inicializar dirección hacia arriba 
@@ -199,14 +213,19 @@ document.querySelectorAll('#controles-tactiles button').forEach(btn => {
 
 function bucleAnimacion(timestamp) {
     if(juegoTerminado) return; // Si el juego ha terminado, no continuar
+
     if (!tiempoUltimoMovimiento) tiempoUltimoMovimiento = timestamp;
+    if (!tiempoInicioRespiracion) tiempoInicioRespiracion = timestamp;
+
+    const ciclo = (timestamp - tiempoInicioRespiracion) / 1000;
+    const escala = 1 + 0.1 * Math.sin(ciclo * Math.PI * 2);
 
     const delta = timestamp - tiempoUltimoMovimiento;
     progresoAnimacion = Math.min(delta / intervaloMovimiento, 1);
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     dibujarTablero();
-    dibujarComida();
+    dibujarComida(escala);
 
     ctx.fillStyle = "#007F00";
     for (let i = 0; i < tamaño; i++) {
