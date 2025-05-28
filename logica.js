@@ -19,6 +19,11 @@ let tiempoInicioRespiracion = null
 const imagenDeManzana = new Image();
 imagenDeManzana.src = "imgs/manzana.png";
 
+const imagenCabezaDeSerpiente = new Image();
+imagenCabezaDeSerpiente.src = "imgs/cabeza-serpiente.png";
+
+const escalaCabezaDeSerpiente = 1.8
+
 // Posición inicial de la serpiente al centro del tablero
 snakeX[0] = Math.floor(columnas / 2);
 snakeY[0] = Math.floor(filas / 2);
@@ -39,14 +44,19 @@ let puntajeMaximo = parseInt(localStorage.getItem("puntajeMaximo")) || 0
 // Mostrar el puntaje maximo en el HTML
 const conteoPuntajeMaximo = document.getElementById("record")
 conteoPuntajeMaximo.textContent = puntajeMaximo
+
 // Dibujar el tablero tipo ajedrez
 function dibujarTablero() {
+    // Recorrer filas
     for (let fila = 0; fila < filas; fila++) {
+        // Recorrer columnas
         for (let col = 0; col < columnas; col++) {
             // Alternar color como ajedrez
             if ((fila + col) % 2 === 0) {
+                // Color claro
                 ctx.fillStyle = "#A9D752"
             } else {
+                // Color oscuro
                 ctx.fillStyle = "#A3D14A"
             }
             ctx.fillRect(col * celda, fila * celda, celda, celda)
@@ -56,14 +66,35 @@ function dibujarTablero() {
 
 dibujarTablero()
 
-function dibujarSerpiente() {
-    ctx.fillStyle = "#007F00"
+function dibujarSerpiente(prog) {
     for (let i = 0; i < tamaño; i++) {
-        ctx.fillRect(snakeX[i] * celda, snakeY[i] * celda, celda, celda);
+        const prev = posicionesPrevias[i]
+        const curr = { x: snakeX[i], y: snakeY[i]}
+        const xInt = (prev.x + (curr.x - prev.x) * prog) * celda
+        const yInt = (prev.y + (curr.y - prev.y) * prog) * celda
+        
+        if (i == 0) {
+            // dimesiones de la cabeza
+            const wH = celda * escalaCabezaDeSerpiente
+            const hH = celda * escalaCabezaDeSerpiente
+            // centra sobre la casilla
+            const offset = (celda - wH) / 2
+            //dibuja la cabeza de la serpiente
+            if (imagenCabezaDeSerpiente.complete) {
+                ctx.drawImage(imagenCabezaDeSerpiente, xInt + offset, yInt + offset, wH, hH);
+            } else {
+                ctx.fillStyle = "#004000";
+                ctx.fillRect(xInt + offset, yInt + offset, celda, celda);
+            }
+        } else {
+            //dibuja el cuerpo de la serpiente
+            ctx.fillStyle = "#007F00"
+            ctx.fillRect(xInt, yInt, celda, celda);
+        }
     }
-}
+    }
 
-dibujarSerpiente()
+dibujarSerpiente(progresoAnimacion)
 generarComida();
 
 function generarComida() {
@@ -78,13 +109,13 @@ function dibujarComida(escala) {
     const x = comidaX * celda + (celda - w) / 2
     const y = comidaY * celda + (celda - h) / 2
 
-    if(!imagenDeManzana.complete) {
+    if (!imagenDeManzana.complete) {
         ctx.fillStyle = "#FF0000"; // Rojo
         ctx.fillRect(comidaX * celda, comidaY * celda, celda, celda);
         return
     }
 
-    ctx.drawImage(imagenDeManzana, x, y, w, h);    
+    ctx.drawImage(imagenDeManzana, x, y, w, h);
 }
 
 // Inicializar dirección hacia arriba 
@@ -212,7 +243,7 @@ document.querySelectorAll('#controles-tactiles button').forEach(btn => {
 });
 
 function bucleAnimacion(timestamp) {
-    if(juegoTerminado) return; // Si el juego ha terminado, no continuar
+    if (juegoTerminado) return; // Si el juego ha terminado, no continuar
 
     if (!tiempoUltimoMovimiento) tiempoUltimoMovimiento = timestamp;
     if (!tiempoInicioRespiracion) tiempoInicioRespiracion = timestamp;
@@ -227,14 +258,16 @@ function bucleAnimacion(timestamp) {
     dibujarTablero();
     dibujarComida(escala);
 
-    ctx.fillStyle = "#007F00";
-    for (let i = 0; i < tamaño; i++) {
-        const prev = posicionesPrevias[i];
-        const curr = { x: snakeX[i], y: snakeY[i] };
-        const xInt = prev.x + (curr.x - prev.x) * progresoAnimacion;
-        const yInt = prev.y + (curr.y - prev.y) * progresoAnimacion;
-        ctx.fillRect(xInt * celda, yInt * celda, celda, celda);
-    }
+    dibujarSerpiente(progresoAnimacion);
+
+    // ctx.fillStyle = "#007F00";
+    // for (let i = 0; i < tamaño; i++) {
+    //     const prev = posicionesPrevias[i];
+    //     const curr = { x: snakeX[i], y: snakeY[i] };
+    //     const xInt = prev.x + (curr.x - prev.x) * progresoAnimacion;
+    //     const yInt = prev.y + (curr.y - prev.y) * progresoAnimacion;
+    //     ctx.fillRect(xInt * celda, yInt * celda, celda, celda);
+    // }
 
     if (delta >= intervaloMovimiento) {
         // 1) guardo estado “previo”
