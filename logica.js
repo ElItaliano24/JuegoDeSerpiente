@@ -11,6 +11,7 @@ let intervaloMovimiento = velocidad // Intervalo de movimiento
 let progresoAnimacion = 1 // Progreso de la animación
 let posicionesPrevias = [] // Almacena las posiciones previas de la serpiente
 let juegoTerminado = false // Bandera para indicar si el juego ha terminado
+let bloqueoDireccion = true
 // Arreglos para la serpiente
 let snakeX = []
 let snakeY = []
@@ -22,7 +23,15 @@ imagenDeManzana.src = "imgs/manzana.png";
 const imagenCabezaDeSerpiente = new Image();
 imagenCabezaDeSerpiente.src = "imgs/cabeza-serpiente.png";
 
+imagenCabezaDeSerpiente.onload = () => {
+    // Genera la primera posición de comida
+    generarComida();
+    // Arranca el bucle animado
+    requestAnimationFrame(bucleAnimacion);
+};
+
 const escalaCabezaDeSerpiente = 1.8
+const orientacionCabezaDeSerpiente = -Math.PI / 2;
 
 // Posición inicial de la serpiente al centro del tablero
 snakeX[0] = Math.floor(columnas / 2);
@@ -63,43 +72,83 @@ function dibujarTablero() {
         }
     }
 }
+function dibujarCuerpoDeSerpiente(prog) {
+    ctx.strokeStyle = "#A0C432";
+    ctx.lineWidth = celda * 0.8;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    for (let i = 0; i < tamaño; i++) {
+        const prev = posicionesPrevias[i];
+        const curr = { x: snakeX[i], y: snakeY[i] };
+        const x = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
+        const y = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
 
 dibujarTablero()
 
+function calcularAnguloCabezaSerpiente(dirX, dirY) {
+    let ang = 0;
+    if (dirX === 1) ang = 0;           // Derecha
+    if (dirX === -1) ang = Math.PI;    // Izquierda
+    if (dirY === 1) ang = Math.PI / 2;  // Abajo
+    if (dirY === -1) ang = -Math.PI / 2;  // Arriba
+    return ang + orientacionCabezaDeSerpiente;
+}
+
 function dibujarSerpiente(prog) {
+
+    dibujarCuerpoDeSerpiente(prog)
+
     for (let i = 0; i < tamaño; i++) {
         const prev = posicionesPrevias[i]
-        const curr = { x: snakeX[i], y: snakeY[i]}
+        const curr = { x: snakeX[i], y: snakeY[i] }
         const xInt = (prev.x + (curr.x - prev.x) * prog) * celda
         const yInt = (prev.y + (curr.y - prev.y) * prog) * celda
-        
-        if (i == 0) {
+
+        if (i === 0 && imagenCabezaDeSerpiente.complete) {
             // dimesiones de la cabeza
             const wH = celda * escalaCabezaDeSerpiente
             const hH = celda * escalaCabezaDeSerpiente
             // centra sobre la casilla
             const offset = (celda - wH) / 2
-            //dibuja la cabeza de la serpiente
-            if (imagenCabezaDeSerpiente.complete) {
-                ctx.drawImage(imagenCabezaDeSerpiente, xInt + offset, yInt + offset, wH, hH);
-            } else {
-                ctx.fillStyle = "#004000";
-                ctx.fillRect(xInt + offset, yInt + offset, celda, celda);
-            }
-        } else {
-            //dibuja el cuerpo de la serpiente
-            ctx.fillStyle = "#007F00"
-            ctx.fillRect(xInt, yInt, celda, celda);
-        }
-    }
-    }
 
-dibujarSerpiente(progresoAnimacion)
-generarComida();
+            const x0 = xInt + offset
+            const y0 = yInt + offset
+            const cx = x0 + wH / 2
+            const cy = y0 + hH / 2
+
+            ctx.save()
+            ctx.translate(cx, cy)
+            const ang = calcularAnguloCabezaSerpiente(dirX, dirY)
+            ctx.rotate(ang)
+            ctx.drawImage(imagenCabezaDeSerpiente, -wH / 2, -hH / 2, wH, hH);
+            ctx.restore()
+        } 
+    }
+}
+
 
 function generarComida() {
-    comidaX = Math.floor(Math.random() * columnas);
-    comidaY = Math.floor(Math.random() * filas);
+    let col, fil, cuerpoSerpiente;
+    do {
+        col = Math.floor(Math.random() * columnas);
+        fil = Math.floor(Math.random() * filas);
+        cuerpoSerpiente = false;
+
+        for (let i = 0; i < tamaño; i++) {
+            if (snakeX[i] === col && snakeY[i] === fil) {
+                cuerpoSerpiente = true; // La comida está en el cuerpo de la serpiente
+                break;
+            }
+        }
+    } while(cuerpoSerpiente)
+
+    comidaX = col;
+    comidaY = fil;
 }
 
 function dibujarComida(escala) {
@@ -124,6 +173,8 @@ let dirY = 0;
 
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
+
+    bloqueoDireccion = true; // Permite un nuevo movimiento
 
     // Mover el cuerpo
     for (let i = tamaño - 1; i > 0; i--) {
@@ -191,12 +242,14 @@ let intervalo = null; // aún no comienza el juego
 let iniciado = false; // bandera para detectar primer movimiento
 
 function mover(direccion) {
-    console.log("mover→", direccion);
 
     if (!iniciado) {
         iniciado = true;
         requestAnimationFrame(bucleAnimacion); // Inicia la animación
     }
+
+    if(!bloqueoDireccion) return; // Si ya se está moviendo, no hacer nada
+    bloqueoDireccion = false; // Bloquea la dirección para evitar múltiples movimientos
     switch (direccion) {
         case "up":
             if (dirY !== 1) {
@@ -259,15 +312,6 @@ function bucleAnimacion(timestamp) {
     dibujarComida(escala);
 
     dibujarSerpiente(progresoAnimacion);
-
-    // ctx.fillStyle = "#007F00";
-    // for (let i = 0; i < tamaño; i++) {
-    //     const prev = posicionesPrevias[i];
-    //     const curr = { x: snakeX[i], y: snakeY[i] };
-    //     const xInt = prev.x + (curr.x - prev.x) * progresoAnimacion;
-    //     const yInt = prev.y + (curr.y - prev.y) * progresoAnimacion;
-    //     ctx.fillRect(xInt * celda, yInt * celda, celda, celda);
-    // }
 
     if (delta >= intervaloMovimiento) {
         // 1) guardo estado “previo”
