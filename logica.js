@@ -127,7 +127,7 @@ function dibujarSerpiente(prog) {
             ctx.rotate(ang)
             ctx.drawImage(imagenCabezaDeSerpiente, -wH / 2, -hH / 2, wH, hH);
             ctx.restore()
-        } 
+        }
     }
 }
 
@@ -145,7 +145,7 @@ function generarComida() {
                 break;
             }
         }
-    } while(cuerpoSerpiente)
+    } while (cuerpoSerpiente)
 
     comidaX = col;
     comidaY = fil;
@@ -248,7 +248,7 @@ function mover(direccion) {
         requestAnimationFrame(bucleAnimacion); // Inicia la animación
     }
 
-    if(!bloqueoDireccion) return; // Si ya se está moviendo, no hacer nada
+    if (!bloqueoDireccion) return; // Si ya se está moviendo, no hacer nada
     bloqueoDireccion = false; // Bloquea la dirección para evitar múltiples movimientos
     switch (direccion) {
         case "up":
@@ -324,4 +324,36 @@ function bucleAnimacion(timestamp) {
         tiempoUltimoMovimiento = timestamp;
     }
     requestAnimationFrame(bucleAnimacion);
-} 
+}
+
+
+let toqueX = 0
+let toqueY = 0
+const umbralSwipe = 30; // Umbral para detectar swipe
+
+
+canvas.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1) return; // Asegurarse de que solo hay un toque{
+    const t = e.touches[0];
+    toqueX = t.clientX;
+    toqueY = t.clientY;
+}, { passive: true });
+
+canvas.addEventListener("touchend", (e) => {
+    if (!e.changedTouches || e.changedTouches.length !== 1) return; // Asegurarse de que solo hay un toque
+    const t = e.changedTouches[0];
+    const dx = t.clientX - toqueX;
+    const dy = t.clientY - toqueY;
+
+    if (Math.abs(dx) < umbralSwipe && Math.abs(dy) < umbralSwipe) return
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        // Movimiento horizontal
+        if (dx > 0) mover("right");
+        else mover("left");
+    } else {
+        // Movimiento vertical
+        if (dy > 0) mover("down");
+        else mover("up");
+    }
+}, { passive: true });
