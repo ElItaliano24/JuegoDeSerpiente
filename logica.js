@@ -3,8 +3,8 @@ let columnas, filas;
 
 if (window.innerWidth < 768) {
     // Dispositivo móvil
-    columnas = 10;
-    filas = 10;
+    columnas = 12;
+    filas = 12;
 } else {
     columnas = 19
     filas = 19
