@@ -1,6 +1,14 @@
 // Declaración de variables
-let columnas = 19
-let filas = 19
+let columnas, filas;
+
+if (window.innerWidth < 768) {
+    // Dispositivo móvil
+    columnas = 10;
+    filas = 10;
+} else {
+    columnas = 19
+    filas = 19
+}
 let velocidad = 400 // milisegundos entre frames
 let tamaño = 1 // tamaño de la serpiente
 let puntaje = 0
@@ -287,12 +295,6 @@ document.addEventListener("keydown", event => {
         ArrowRight: "right"
     };
     if (mapa[event.key]) mover(mapa[event.key]);
-});
-
-document.querySelectorAll('#controles-tactiles button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        mover(btn.dataset.dir);
-    });
 });
 
 function bucleAnimacion(timestamp) {
