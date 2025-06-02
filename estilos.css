@@ -15,10 +15,8 @@ body {
 
 #miCanvas {
     width: 90vw;
-    height: 90vw;
     max-width: 600px;
     max-height: 600px;
-
     display: block;
 }
 
@@ -26,7 +24,6 @@ body {
     background-color: #4A752D;
     width: 100%;
     height: 60px;
-    margin-bottom: 30px;
     display: flex;
     justify-content: center;
 }
@@ -74,7 +71,8 @@ body {
 @media (max-width: 480px) {
     #miCanvas {
         width: 95vw;
-        height: 95vw;
+        margin-top: 2.5vw;
+    margin-bottom: 2.5vw;
     }
 }
 
