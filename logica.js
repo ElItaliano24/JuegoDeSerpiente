@@ -1,14 +1,4 @@
-// Declaración de variables
-let columnas, filas;
-
-if (window.innerWidth < 768) {
-    // Dispositivo móvil
-    columnas = 12;
-    filas = 12;
-} else {
-    columnas = 19
-    filas = 19
-}
+//Declaracion de variables
 let velocidad = 400 // milisegundos entre frames
 let tamaño = 1 // tamaño de la serpiente
 let puntaje = 0
@@ -41,6 +31,57 @@ imagenCabezaDeSerpiente.onload = () => {
 const escalaCabezaDeSerpiente = 1.8
 const orientacionCabezaDeSerpiente = -Math.PI / 2;
 
+
+
+const movil = window.innerWidth < 768; // Detectar si es móvil
+
+// Acceder al canvas y su contexto
+const canvas = document.getElementById("miCanvas")
+const ctx = canvas.getContext("2d")
+const header = document.getElementById("pizarra")
+
+function ajustarTamañoCanvas() {
+    const altoVentana = window.innerHeight
+    const altoHeader = header.getBoundingClientRect().height
+
+    const unidadVW = window.innerWidth / 100; // 1vw en píxeles
+    const margenArriba = 2 * unidadVW; // 2vw en píxeles
+    const margenAbajo = 2 * unidadVW; // 2vw en píxeles
+    const altoDisponible = altoVentana - altoHeader - margenArriba - margenAbajo;
+
+    const anchoMaximoViewport = Math.floor(window.innerWidth * 0.95);
+
+    if (movil) {
+        let altoPx = altoDisponible
+        let anchoPx = Math.floor(altoPx * (12 / 22))
+
+        if (anchoPx > anchoMaximoViewport) {
+            anchoPx = anchoMaximoViewport;
+            altoPx = Math.floor(anchoPx * (22 / 12));
+        }
+
+        canvas.style.width = anchoPx + "px"
+        canvas.style.height = altoPx + "px"
+
+        canvas.width = anchoPx
+        canvas.height = altoPx
+    } else {
+        const tamBase = Math.min(window.innerWidth * 0.9, 600)
+        canvas.style.width = tamBase + "px"
+        canvas.style.height = tamBase + "px"
+        canvas.width = tamBase
+        canvas.height = tamBase
+    }
+}
+
+ajustarTamañoCanvas()
+window.addEventListener("resize", () => {
+    window.location.reload();
+});
+
+let columnas = movil ? 12 : 19;
+let filas = movil ? 22 : 19;
+
 // Posición inicial de la serpiente al centro del tablero
 snakeX[0] = Math.floor(columnas / 2);
 snakeY[0] = Math.floor(filas / 2);
@@ -48,10 +89,6 @@ snakeY[0] = Math.floor(filas / 2);
 for (let i = 0; i < tamaño; i++) {
     posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] }
 }
-
-// Acceder al canvas y su contexto
-const canvas = document.getElementById("miCanvas")
-const ctx = canvas.getContext("2d")
 
 // Tamaño de cada celda
 const celda = canvas.width / columnas

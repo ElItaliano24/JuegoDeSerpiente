@@ -14,10 +14,9 @@ body {
 }
 
 #miCanvas {
-    width: 90vw;
-    max-width: 600px;
-    max-height: 600px;
     display: block;
+    margin: 2vw auto;
+    max-width: 95vw;
 }
 
 #pizarra {
@@ -64,17 +63,13 @@ body {
     background: #4A752D;
 }
 
-#controles-tactiles > div > button:first-child {
+#controles-tactiles>div>button:first-child {
     margin-right: 60px;
 }
 
-@media (max-width: 480px) {
-    #miCanvas {
-        width: 95vw;
-        margin-top: 2.5vw;
-    margin-bottom: 2.5vw;
-    }
-}
+/* @media (max-width: 480px) {
+
+} */
 
 @media (min-width:1024px) {
     #pizarra {
