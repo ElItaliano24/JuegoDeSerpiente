@@ -30,8 +30,16 @@ imagenCabezaDeSerpiente.onload = () => {
 
 const escalaCabezaDeSerpiente = 1.8
 const orientacionCabezaDeSerpiente = -Math.PI / 2;
+let anguloActualCabeza = orientacionCabezaDeSerpiente; // Ángulo actual de la cabeza de la serpiente
 
-
+function calcularAnguloCabezaSerpiente(dirX, dirY) {
+    let angulo = 0;
+    if (dirX === 1) angulo = 0;           // Derecha
+    if (dirX === -1) angulo = Math.PI;    // Izquierda
+    if (dirY === 1) angulo = Math.PI / 2;  // Abajo
+    if (dirY === -1) angulo = -Math.PI / 2;  // Arriba
+    return angulo + orientacionCabezaDeSerpiente;
+}
 
 const movil = window.innerWidth < 768; // Detectar si es móvil
 
@@ -148,6 +156,20 @@ function dibujarSerpiente(prog) {
 
     dibujarCuerpoDeSerpiente(prog)
 
+    const anguloObjetivoCabeza = calcularAnguloCabezaSerpiente(dirX, dirY);
+
+    const factorInterpolacion = 0.2
+
+    let diferenciaAngulo = anguloObjetivoCabeza - anguloActualCabeza;
+    
+    if (diferenciaAngulo > Math.PI) {
+        diferenciaAngulo -= 2 * Math.PI; // Ajustar para el rango [-π, π]
+    } else if (diferenciaAngulo < -Math.PI) {
+        diferenciaAngulo += 2 * Math.PI; // Ajustar para el rango [-π, π]
+    }
+
+    anguloActualCabeza += diferenciaAngulo * factorInterpolacion;
+
     for (let i = 0; i < tamaño; i++) {
         const prev = posicionesPrevias[i]
         const curr = { x: snakeX[i], y: snakeY[i] }
@@ -168,8 +190,7 @@ function dibujarSerpiente(prog) {
 
             ctx.save()
             ctx.translate(cx, cy)
-            const ang = calcularAnguloCabezaSerpiente(dirX, dirY)
-            ctx.rotate(ang)
+            ctx.rotate(anguloActualCabeza)
             ctx.drawImage(imagenCabezaDeSerpiente, -wH / 2, -hH / 2, wH, hH);
             ctx.restore()
         }
