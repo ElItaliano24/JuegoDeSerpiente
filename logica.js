@@ -373,13 +373,15 @@ const umbralSwipe = 30; // Umbral para detectar swipe
 
 canvas.addEventListener("touchstart", (e) => {
     if (e.touches.length !== 1) return; // Asegurarse de que solo hay un toque{
+    e.preventDefault()
     const t = e.touches[0];
     toqueX = t.clientX;
     toqueY = t.clientY;
-}, { passive: true });
+}, { passive: false });
 
 canvas.addEventListener("touchend", (e) => {
     if (!e.changedTouches || e.changedTouches.length !== 1) return; // Asegurarse de que solo hay un toque
+    e.preventDefault()
     const t = e.changedTouches[0];
     const dx = t.clientX - toqueX;
     const dy = t.clientY - toqueY;
@@ -395,4 +397,8 @@ canvas.addEventListener("touchend", (e) => {
         if (dy > 0) mover("down");
         else mover("up");
     }
-}, { passive: true });
+}, { passive: false });
+
+canvas.addEventListener("touchmove", (e) => {
+ e.preventDefault(); // Evitar el scroll de la página   
+}, { passive: false });
