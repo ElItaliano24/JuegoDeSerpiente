@@ -1,6 +1,6 @@
 //Declaracion de variables
 let velocidad = 400 // milisegundos entre frames
-let tamaño = 1 // tamaño de la serpiente
+let tamaño = 3 // tamaño de la serpiente
 let puntaje = 0
 let comidaX = 0
 let comidaY = 0
@@ -14,6 +14,7 @@ let bloqueoDireccion = true
 let snakeX = []
 let snakeY = []
 let tiempoInicioRespiracion = null
+let primeraComida = true
 
 const imagenDeManzana = new Image();
 imagenDeManzana.src = "imgs/manzana.png";
@@ -94,6 +95,12 @@ let filas = movil ? 22 : 19;
 snakeX[0] = Math.floor(columnas / 2);
 snakeY[0] = Math.floor(filas / 2);
 
+// Añadimos los dos segmentos “detrás” de la cabeza, extendidos hacia la izquierda
+for (let i = 1; i < tamaño; i++) {
+    snakeX[i] = snakeX[0] - i;        // columna a la izquierda de la cabeza
+    snakeY[i] = snakeY[0];
+}
+
 for (let i = 0; i < tamaño; i++) {
     posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] }
 }
@@ -116,30 +123,66 @@ function dibujarTablero() {
             // Alternar color como ajedrez
             if ((fila + col) % 2 === 0) {
                 // Color claro
-                ctx.fillStyle = "#A9D752"
+                ctx.fillStyle = "#AEDBF0"
             } else {
                 // Color oscuro
-                ctx.fillStyle = "#A3D14A"
+                ctx.fillStyle = "#276678"
             }
             ctx.fillRect(col * celda, fila * celda, celda, celda)
         }
     }
 }
+
 function dibujarCuerpoDeSerpiente(prog) {
-    ctx.strokeStyle = "#A0C432";
-    ctx.lineWidth = celda * 0.8;
     ctx.lineCap = "round";
-    ctx.beginPath();
-    for (let i = 0; i < tamaño; i++) {
-        const prev = posicionesPrevias[i];
-        const curr = { x: snakeX[i], y: snakeY[i] };
-        const x = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
-        const y = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+
+    const maxAncho = celda * 0.9;      // ancho en la cabeza
+    const minAncho = celda * 0.5;      // ancho en la cola
+
+    for (let i = 1; i < tamaño; i++) {
+        // cálculo de posiciones igual que antes...
+        const prev = posicionesPrevias[i - 1];
+        const curr = { x: snakeX[i - 1], y: snakeY[i - 1] };
+        const x0 = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
+        const y0 = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
+
+        const nextPrev = posicionesPrevias[i];
+        const nextCurr = { x: snakeX[i], y: snakeY[i] };
+        const x1 = (nextPrev.x + (nextCurr.x - nextPrev.x) * prog) * celda + celda / 2;
+        const y1 = (nextPrev.y + (nextCurr.y - nextPrev.y) * prog) * celda + celda / 2;
+
+        // t lineal
+        const t = i / (tamaño - 1);
+        // t2 elevado al cuadrado: ralentiza la caída de grosor
+        const t2 = Math.pow(t, 2);
+
+        const ancho = maxAncho * (1 - t2) + minAncho * t2;
+
+        ctx.lineWidth = ancho;
+        ctx.strokeStyle = "#A0C432";
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
     }
-    ctx.stroke();
 }
+
+
+// function dibujarCuerpoDeSerpiente(prog) {
+//     ctx.strokeStyle = "#A0C432";
+//     ctx.lineWidth = celda * 0.8;
+//     ctx.lineCap = "round";
+//     ctx.beginPath();
+//     for (let i = 0; i < tamaño; i++) {
+//         const prev = posicionesPrevias[i];
+//         const curr = { x: snakeX[i], y: snakeY[i] };
+//         const x = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
+//         const y = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
+//         if (i === 0) ctx.moveTo(x, y);
+//         else ctx.lineTo(x, y);
+//     }
+//     ctx.stroke();
+// }
 
 dibujarTablero()
 
@@ -199,6 +242,15 @@ function dibujarSerpiente(prog) {
 
 
 function generarComida() {
+
+    // Primera comida, se coloca a la derecha a 3 bloques de la cabeza
+    if (primeraComida) {
+        comidaX = snakeX[0] + 3;
+        comidaY = snakeY[0];
+        primeraComida = false; 
+        return
+    }
+
     let col, fil, cuerpoSerpiente;
     do {
         col = Math.floor(Math.random() * columnas);
@@ -239,6 +291,8 @@ let dirY = 0;
 
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
+
+     if (dirX === 0 && dirY === 0) return;
 
     bloqueoDireccion = true; // Permite un nuevo movimiento
 
