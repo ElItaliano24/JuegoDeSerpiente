@@ -15,6 +15,8 @@ let snakeX = []
 let snakeY = []
 let tiempoInicioRespiracion = null
 let primeraComida = true
+let anchos = []
+let rutaSerpiente = new Path2D();
 
 const imagenDeManzana = new Image();
 imagenDeManzana.src = "imgs/manzana.png";
@@ -107,6 +109,8 @@ for (let i = 0; i < tamaño; i++) {
 
 // Tamaño de cada celda
 const celda = canvas.width / columnas
+recalcularAnchos()
+construirRutaSerpiente()
 
 // Leer el puntaje maximo inicial
 let puntajeMaximo = parseInt(localStorage.getItem("puntajeMaximo")) || 0
@@ -134,13 +138,18 @@ function dibujarTablero() {
 }
 
 function dibujarCuerpoDeSerpiente(prog) {
+    // Early-exit: dibujo rápido cuando la animación intermedia ha terminado
+    if (prog === 1) {
+        ctx.lineCap = "round";
+        ctx.lineWidth = anchos[0]       
+        ctx.strokeStyle = "#A0C432";
+        ctx.stroke(rutaSerpiente);
+        return;
+    }
+
     ctx.lineCap = "round";
 
-    const maxAncho = celda * 0.9;      // ancho en la cabeza
-    const minAncho = celda * 0.5;      // ancho en la cola
-
     for (let i = 1; i < tamaño; i++) {
-        // cálculo de posiciones igual que antes...
         const prev = posicionesPrevias[i - 1];
         const curr = { x: snakeX[i - 1], y: snakeY[i - 1] };
         const x0 = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
@@ -151,14 +160,7 @@ function dibujarCuerpoDeSerpiente(prog) {
         const x1 = (nextPrev.x + (nextCurr.x - nextPrev.x) * prog) * celda + celda / 2;
         const y1 = (nextPrev.y + (nextCurr.y - nextPrev.y) * prog) * celda + celda / 2;
 
-        // t lineal
-        const t = i / (tamaño - 1);
-        // t2 elevado al cuadrado: ralentiza la caída de grosor
-        const t2 = Math.pow(t, 2);
-
-        const ancho = maxAncho * (1 - t2) + minAncho * t2;
-
-        ctx.lineWidth = ancho;
+        ctx.lineWidth = anchos[i];
         ctx.strokeStyle = "#A0C432";
         ctx.beginPath();
         ctx.moveTo(x0, y0);
@@ -167,33 +169,33 @@ function dibujarCuerpoDeSerpiente(prog) {
     }
 }
 
+function recalcularAnchos() {
+    anchos = []
+    const maxAncho = celda * 0.9;
+    const minAncho = celda * 0.5;
+    for (let i = 0; i < tamaño; i++) {
+        const t = i / (tamaño - 1);
+        const t2 = t * t;
+        anchos[i] = maxAncho * (1 - t2) + minAncho * t2;    
+    }
+}
 
-// function dibujarCuerpoDeSerpiente(prog) {
-//     ctx.strokeStyle = "#A0C432";
-//     ctx.lineWidth = celda * 0.8;
-//     ctx.lineCap = "round";
-//     ctx.beginPath();
-//     for (let i = 0; i < tamaño; i++) {
-//         const prev = posicionesPrevias[i];
-//         const curr = { x: snakeX[i], y: snakeY[i] };
-//         const x = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
-//         const y = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
-//         if (i === 0) ctx.moveTo(x, y);
-//         else ctx.lineTo(x, y);
-//     }
-//     ctx.stroke();
-// }
+function construirRutaSerpiente() {
+    rutaSerpiente = new Path2D();
+    for (let i = 0; i < tamaño; i++) {
+        const centroX = snakeX[i] * celda + celda / 2;
+        const centroY = snakeY[i] * celda + celda / 2;
+        if (i === 0) {
+            rutaSerpiente.moveTo(centroX, centroY);
+        } else {
+            rutaSerpiente.lineTo(centroX, centroY);
+        }
+    }
+}
 
 dibujarTablero()
 
-function calcularAnguloCabezaSerpiente(dirX, dirY) {
-    let ang = 0;
-    if (dirX === 1) ang = 0;           // Derecha
-    if (dirX === -1) ang = Math.PI;    // Izquierda
-    if (dirY === 1) ang = Math.PI / 2;  // Abajo
-    if (dirY === -1) ang = -Math.PI / 2;  // Arriba
-    return ang + orientacionCabezaDeSerpiente;
-}
+
 
 function dibujarSerpiente(prog) {
 
@@ -204,7 +206,7 @@ function dibujarSerpiente(prog) {
     const factorInterpolacion = 0.2
 
     let diferenciaAngulo = anguloObjetivoCabeza - anguloActualCabeza;
-    
+
     if (diferenciaAngulo > Math.PI) {
         diferenciaAngulo -= 2 * Math.PI; // Ajustar para el rango [-π, π]
     } else if (diferenciaAngulo < -Math.PI) {
@@ -247,7 +249,7 @@ function generarComida() {
     if (primeraComida) {
         comidaX = snakeX[0] + 3;
         comidaY = snakeY[0];
-        primeraComida = false; 
+        primeraComida = false;
         return
     }
 
@@ -292,7 +294,7 @@ let dirY = 0;
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
 
-     if (dirX === 0 && dirY === 0) return;
+    if (dirX === 0 && dirY === 0) return;
 
     bloqueoDireccion = true; // Permite un nuevo movimiento
 
@@ -316,7 +318,9 @@ function actualizarPosicionSerpiente() {
             y: snakeY[tamaño - 1]
         }
         tamaño++;
-        posicionesPrevias.push(colaAnterior)     // La serpiente crece
+        posicionesPrevias.push(colaAnterior) 
+        recalcularAnchos()
+        construirRutaSerpiente()    // La serpiente crece
         puntaje++;      // Aumenta el puntaje
         //Ajustar velocidad
         velocidad = Math.max(100, 400 - puntaje * 20)
@@ -475,5 +479,5 @@ canvas.addEventListener("touchend", (e) => {
 }, { passive: false });
 
 canvas.addEventListener("touchmove", (e) => {
- e.preventDefault(); // Evitar el scroll de la página   
+    e.preventDefault(); // Evitar el scroll de la página   
 }, { passive: false });
