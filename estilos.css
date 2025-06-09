@@ -72,10 +72,6 @@ body {
     margin-right: 60px;
 }
 
-/* @media (max-width: 480px) {
-
-} */
-
 @media (min-width:1024px) {
     #pizarra {
         width: 700px;

@@ -94,8 +94,10 @@ let columnas = movil ? 12 : 19;
 let filas = movil ? 22 : 19;
 
 // Posición inicial de la serpiente al centro del tablero
-snakeX[0] = Math.floor(columnas / 2);
-snakeY[0] = Math.floor(filas / 2);
+const centroX = Math.floor(columnas / 2);
+const centroY = Math.floor(filas / 2);
+snakeX[0] = centroX - 3;
+snakeY[0] = centroY;
 
 // Añadimos los dos segmentos “detrás” de la cabeza, extendidos hacia la izquierda
 for (let i = 1; i < tamaño; i++) {
@@ -138,36 +140,58 @@ function dibujarTablero() {
 }
 
 function dibujarCuerpoDeSerpiente(prog) {
-    // Early-exit: dibujo rápido cuando la animación intermedia ha terminado
+    ctx.strokeStyle = "#A0C432";
+    ctx.lineCap = "round";
+
+    // 1) REPOSO: dibujar todos los segmentos enteros
+    if (dirX === 0 && dirY === 0) {
+        for (let i = 1; i < tamaño; i++) {
+            const a = posicionesPrevias[i - 1];
+            const b = posicionesPrevias[i];
+            const x0 = a.x * celda + celda / 2;
+            const y0 = a.y * celda + celda / 2;
+            const x1 = b.x * celda + celda / 2;
+            const y1 = b.y * celda + celda / 2;
+
+            ctx.lineWidth = anchos[i];
+            ctx.beginPath();
+            ctx.moveTo(x0, y0);
+            ctx.lineTo(x1, y1);
+            ctx.stroke();
+        }
+        return;
+    }
+
+    // 2) MOVIMIENTO: tu interpolación normal
     if (prog === 1) {
-        ctx.lineCap = "round";
-        ctx.lineWidth = anchos[0]       
-        ctx.strokeStyle = "#A0C432";
+        // cuando termine la interpolación, dibuja toda la ruta con ancho de la cabeza
+        ctx.lineWidth = anchos[0];
         ctx.stroke(rutaSerpiente);
         return;
     }
 
+    // fases intermedias: cada segmento entre su previa y su actual
     ctx.lineCap = "round";
-
     for (let i = 1; i < tamaño; i++) {
         const prev = posicionesPrevias[i - 1];
         const curr = { x: snakeX[i - 1], y: snakeY[i - 1] };
-        const x0 = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
-        const y0 = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
-
         const nextPrev = posicionesPrevias[i];
         const nextCurr = { x: snakeX[i], y: snakeY[i] };
+
+        const x0 = (prev.x + (curr.x - prev.x) * prog) * celda + celda / 2;
+        const y0 = (prev.y + (curr.y - prev.y) * prog) * celda + celda / 2;
         const x1 = (nextPrev.x + (nextCurr.x - nextPrev.x) * prog) * celda + celda / 2;
         const y1 = (nextPrev.y + (nextCurr.y - nextPrev.y) * prog) * celda + celda / 2;
 
         ctx.lineWidth = anchos[i];
-        ctx.strokeStyle = "#A0C432";
         ctx.beginPath();
         ctx.moveTo(x0, y0);
         ctx.lineTo(x1, y1);
         ctx.stroke();
     }
 }
+
+
 
 function recalcularAnchos() {
     anchos = []
@@ -176,7 +200,7 @@ function recalcularAnchos() {
     for (let i = 0; i < tamaño; i++) {
         const t = i / (tamaño - 1);
         const t2 = t * t;
-        anchos[i] = maxAncho * (1 - t2) + minAncho * t2;    
+        anchos[i] = maxAncho * (1 - t2) + minAncho * t2;
     }
 }
 
@@ -247,7 +271,7 @@ function generarComida() {
 
     // Primera comida, se coloca a la derecha a 3 bloques de la cabeza
     if (primeraComida) {
-        comidaX = snakeX[0] + 3;
+        comidaX = snakeX[0] + 6;
         comidaY = snakeY[0];
         primeraComida = false;
         return
@@ -288,8 +312,7 @@ function dibujarComida(escala) {
 }
 
 // Inicializar dirección hacia arriba 
-let dirX = 0;
-let dirY = 0;
+let dirX = 0, dirY = 0;
 
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
@@ -318,7 +341,7 @@ function actualizarPosicionSerpiente() {
             y: snakeY[tamaño - 1]
         }
         tamaño++;
-        posicionesPrevias.push(colaAnterior) 
+        posicionesPrevias.push(colaAnterior)
         recalcularAnchos()
         construirRutaSerpiente()    // La serpiente crece
         puntaje++;      // Aumenta el puntaje
@@ -410,7 +433,8 @@ document.addEventListener("keydown", event => {
         ArrowLeft: "left",
         ArrowRight: "right"
     };
-    if (mapa[event.key]) mover(mapa[event.key]);
+    const dir = mapa[event.key];
+    if (dir) mover(dir);
 });
 
 function bucleAnimacion(timestamp) {
