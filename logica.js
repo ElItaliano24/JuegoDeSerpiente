@@ -51,6 +51,19 @@ const canvas = document.getElementById("miCanvas")
 const ctx = canvas.getContext("2d")
 const header = document.getElementById("pizarra")
 
+const juegoTerminadoModal = document.getElementById("modalJuegoTerminado");
+const puntajeFinal = document.getElementById("puntajeFinal");
+const reiniciarJuego = document.getElementById("reiniciarJuego")
+
+function mostrarModalJuegoTerminado() {
+    puntajeFinal.textContent = puntaje
+    juegoTerminadoModal.classList.remove("hidden")
+}
+
+reiniciarJuego.addEventListener("click", () => {
+    location.reload();
+});
+
 function ajustarTamañoCanvas() {
     const altoVentana = window.innerHeight
     const altoHeader = header.getBoundingClientRect().height
@@ -360,8 +373,7 @@ function actualizarPosicionSerpiente() {
         snakeY[0] < 0 || snakeY[0] >= filas
     ) {
         juegoTerminado = true; // Cambia el estado del juego
-        alert("💀 ¡Perdiste! La serpiente se salió del tablero.");
-        location.reload(); // Reinicia el juego
+        mostrarModalJuegoTerminado()
         return; // Evita que siga ejecutando el resto
     }
 
@@ -370,8 +382,7 @@ function actualizarPosicionSerpiente() {
         if (snakeX[0] === snakeX[i] && snakeY[0] === snakeY[i]) {
             juegoTerminado = true; // Cambia el estado del juego
             actualizarPuntajeMaximo()
-            alert("💥 ¡Te mordiste a ti mismo! Game over.");
-            location.reload();
+            mostrarModalJuegoTerminado()
             return;
         }
     }
