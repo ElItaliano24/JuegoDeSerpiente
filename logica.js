@@ -1,29 +1,30 @@
-//Declaracion de variables
-let velocidad = 400 // milisegundos entre frames
-let tamaño = 3 // tamaño de la serpiente
-let puntaje = 0
-let comidaX = 0
-let comidaY = 0
-let tiempoUltimoMovimiento = 0 // Tiempo del último movimiento
-let intervaloMovimiento = velocidad // Intervalo de movimiento
-let progresoAnimacion = 1 // Progreso de la animación
-let posicionesPrevias = [] // Almacena las posiciones previas de la serpiente
-let juegoTerminado = false // Bandera para indicar si el juego ha terminado
-let bloqueoDireccion = true
-// Arreglos para la serpiente
-let snakeX = []
-let snakeY = []
-let tiempoInicioRespiracion = null
-let primeraComida = true
-let anchos = []
-let rutaSerpiente = new Path2D();
+// ——————————————————————————————————————————————
+// DECLARACIÓN DE VARIABLES GLOBALES
+// ——————————————————————————————————————————————
 
+let velocidad = 400; // milisegundos entre frames (controla la velocidad del juego)
+let tamaño = 3; // longitud inicial de la serpiente (número de segmentos)
+let puntaje = 0; // puntaje actual del jugador
+let comidaX = 0, comidaY = 0; // posición de la comida en el tablero
+let tiempoUltimoMovimiento = 0; // Tiempo del último movimiento
+let intervaloMovimiento = velocidad; // intervalo dinámico de movimiento (se ajusta al comer)
+let progresoAnimacion = 1; // Progreso de la animación
+let posicionesPrevias = []; // Almacena las posiciones previas de la serpiente
+let juegoTerminado = false; // Bandera para indicar si el juego ha terminado
+let bloqueoDireccion = true; // impide múltiples cambios de dirección antes de mover
+let snakeX = [], snakeY = []; //arrays con las coordenadas de cada segmento (índice 0 = cabeza)
+let tiempoInicioRespiracion = null; //para animación de “respiración” de la comida
+let primeraComida = true; // controla generación especial de la primera manzana
+let anchos = []; // grosores de trazo por segmento (para efecto de “cola”)
+let rutaSerpiente = new Path2D(); // Path2D para dibujar toda la serpiente de un tirón
+
+// imágenes de la comida y la cabeza de la serpiente
 const imagenDeManzana = new Image();
 imagenDeManzana.src = "imgs/manzana.png";
-
 const imagenCabezaDeSerpiente = new Image();
 imagenCabezaDeSerpiente.src = "imgs/cabeza-serpiente.png";
 
+// Esperar a que las imágenes se carguen antes de iniciar el juego
 imagenCabezaDeSerpiente.onload = () => {
     // Genera la primera posición de comida
     generarComida();
