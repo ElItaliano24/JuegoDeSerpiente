@@ -5,17 +5,29 @@
 let velocidad = 400; // milisegundos entre frames (controla la velocidad del juego)
 let tamaño = 3; // longitud inicial de la serpiente (número de segmentos)
 let puntaje = 0; // puntaje actual del jugador
+let puntajeMaximo = parseInt(localStorage.getItem("puntajeMaximo")) || 0 // Puntaje máximo guardado en localStorage
+const movil = window.innerWidth < 768; // Detectar si es móvil
+let columnas = movil ? 12 : 19; // número de columnas del tablero
+let filas = movil ? 22 : 19; // número de filas del tablero
+
 let comidaX = 0, comidaY = 0; // posición de la comida en el tablero
+let primeraComida = true; // controla generación especial de la primera manzana
+
+let snakeX = [], snakeY = []; //arrays con las coordenadas de cada segmento (índice 0 = cabeza)
+let posicionesPrevias = []; // Almacena las posiciones previas de la serpiente
+let anchos = []; // grosores de trazo por segmento (para efecto de “cola”)
+
+let dirX = 0, dirY = 0; // dirección de la serpiente (0 = sin movimiento, 1 = derecha, -1 = izquierda, etc.)
+let bloqueoDireccion = true; // impide múltiples cambios de dirección antes de mover
+
 let tiempoUltimoMovimiento = 0; // Tiempo del último movimiento
 let intervaloMovimiento = velocidad; // intervalo dinámico de movimiento (se ajusta al comer)
 let progresoAnimacion = 1; // Progreso de la animación
-let posicionesPrevias = []; // Almacena las posiciones previas de la serpiente
+
 let juegoTerminado = false; // Bandera para indicar si el juego ha terminado
-let bloqueoDireccion = true; // impide múltiples cambios de dirección antes de mover
-let snakeX = [], snakeY = []; //arrays con las coordenadas de cada segmento (índice 0 = cabeza)
+
 let tiempoInicioRespiracion = null; //para animación de “respiración” de la comida
-let primeraComida = true; // controla generación especial de la primera manzana
-let anchos = []; // grosores de trazo por segmento (para efecto de “cola”)
+
 let rutaSerpiente = new Path2D(); // Path2D para dibujar toda la serpiente de un tirón
 
 // imágenes de la comida y la cabeza de la serpiente
@@ -36,6 +48,57 @@ const escalaCabezaDeSerpiente = 1.8
 const orientacionCabezaDeSerpiente = -Math.PI / 2;
 let anguloActualCabeza = orientacionCabezaDeSerpiente; // Ángulo actual de la cabeza de la serpiente
 
+// Acceder al canvas y su contexto
+const canvas = document.getElementById("miCanvas")
+const ctx = canvas.getContext("2d")
+const header = document.getElementById("pizarra")
+const juegoTerminadoModal = document.getElementById("modalJuegoTerminado");
+const puntajeFinal = document.getElementById("puntajeFinal");
+const reiniciarJuego = document.getElementById("reiniciarJuego")
+
+function ajustarTamañoCanvas() {
+    // Obtener la altura de la ventana del navegador en pixeles
+    const altoVentana = window.innerHeight
+    // Obtener la altura del header
+    const altoHeader = header.getBoundingClientRect().height
+    // Calcular el ancho disponible para el canvas
+    const unidadVW = window.innerWidth / 100; // 1vw en píxeles
+    // Calcular los márgenes en píxeles
+    const margenArriba = 2 * unidadVW; // 2vw en píxeles
+    const margenAbajo = 2 * unidadVW; // 2vw en píxeles
+    // Calcular el alto disponible para el canvas 
+    const altoDisponible = altoVentana - altoHeader - margenArriba - margenAbajo;
+    // Calcular un limite maximo de ancho al 95% porque 2.5% sera de margen a cada lado
+    const anchoMaximoViewport = Math.floor(window.innerWidth * 0.95);
+
+    // Si el ancho de la pantalla es menor a 768px
+    if (movil) {
+        // Alto máximo disponible
+        let altoPx = altoDisponible
+        // Calcular el ancho usando la proporción columnas/filas (12/22) para que cada casilla siga siendo un cuadrado perfecto.
+        let anchoPx = Math.floor(altoPx * (12 / 22))
+        // Si ese ancho proporcional sobrepasa el 95 % del viewport, lo recortamos a ese máximo y volvemos a recalcular el alto con la proporción inversa (filas/columnas).
+        if (anchoPx > anchoMaximoViewport) {
+            anchoPx = anchoMaximoViewport;
+            altoPx = Math.floor(anchoPx * (22 / 12));
+        }
+        //style.width/height: controla el tamaño en la página
+        canvas.style.width = anchoPx + "px"
+        canvas.style.height = altoPx + "px"
+        //canvas.width/height: controla la resolución interna de dibujo
+        canvas.width = anchoPx
+        canvas.height = altoPx
+    } else {
+        //En escritorio (no móvil), usamos un canvas cuadrado: tomamos el 90 % del ancho de la ventana, pero nunca más de 600 px.
+        const tamBase = Math.min(window.innerWidth * 0.9, 600)
+        // Igual que antes, sincronizamos CSS y buffer interno:
+        canvas.style.width = tamBase + "px"
+        canvas.style.height = tamBase + "px"
+        canvas.width = tamBase
+        canvas.height = tamBase
+    }
+}
+
 function calcularAnguloCabezaSerpiente(dirX, dirY) {
     let angulo = 0;
     if (dirX === 1) angulo = 0;           // Derecha
@@ -45,16 +108,9 @@ function calcularAnguloCabezaSerpiente(dirX, dirY) {
     return angulo + orientacionCabezaDeSerpiente;
 }
 
-const movil = window.innerWidth < 768; // Detectar si es móvil
 
-// Acceder al canvas y su contexto
-const canvas = document.getElementById("miCanvas")
-const ctx = canvas.getContext("2d")
-const header = document.getElementById("pizarra")
 
-const juegoTerminadoModal = document.getElementById("modalJuegoTerminado");
-const puntajeFinal = document.getElementById("puntajeFinal");
-const reiniciarJuego = document.getElementById("reiniciarJuego")
+
 
 function mostrarModalJuegoTerminado() {
     puntajeFinal.textContent = puntaje
@@ -65,47 +121,14 @@ reiniciarJuego.addEventListener("click", () => {
     location.reload();
 });
 
-function ajustarTamañoCanvas() {
-    const altoVentana = window.innerHeight
-    const altoHeader = header.getBoundingClientRect().height
 
-    const unidadVW = window.innerWidth / 100; // 1vw en píxeles
-    const margenArriba = 2 * unidadVW; // 2vw en píxeles
-    const margenAbajo = 2 * unidadVW; // 2vw en píxeles
-    const altoDisponible = altoVentana - altoHeader - margenArriba - margenAbajo;
-
-    const anchoMaximoViewport = Math.floor(window.innerWidth * 0.95);
-
-    if (movil) {
-        let altoPx = altoDisponible
-        let anchoPx = Math.floor(altoPx * (12 / 22))
-
-        if (anchoPx > anchoMaximoViewport) {
-            anchoPx = anchoMaximoViewport;
-            altoPx = Math.floor(anchoPx * (22 / 12));
-        }
-
-        canvas.style.width = anchoPx + "px"
-        canvas.style.height = altoPx + "px"
-
-        canvas.width = anchoPx
-        canvas.height = altoPx
-    } else {
-        const tamBase = Math.min(window.innerWidth * 0.9, 600)
-        canvas.style.width = tamBase + "px"
-        canvas.style.height = tamBase + "px"
-        canvas.width = tamBase
-        canvas.height = tamBase
-    }
-}
 
 ajustarTamañoCanvas()
 window.addEventListener("resize", () => {
     window.location.reload();
 });
 
-let columnas = movil ? 12 : 19;
-let filas = movil ? 22 : 19;
+
 
 // Posición inicial de la serpiente al centro del tablero
 const centroX = Math.floor(columnas / 2);
@@ -128,8 +151,7 @@ const celda = canvas.width / columnas
 recalcularAnchos()
 construirRutaSerpiente()
 
-// Leer el puntaje maximo inicial
-let puntajeMaximo = parseInt(localStorage.getItem("puntajeMaximo")) || 0
+
 // Mostrar el puntaje maximo en el HTML
 const conteoPuntajeMaximo = document.getElementById("record")
 conteoPuntajeMaximo.textContent = puntajeMaximo
@@ -325,15 +347,14 @@ function dibujarComida(escala) {
     ctx.drawImage(imagenDeManzana, x, y, w, h);
 }
 
-// Inicializar dirección hacia arriba 
-let dirX = 0, dirY = 0;
+
 
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
 
     if (dirX === 0 && dirY === 0) return;
 
-    bloqueoDireccion = true; // Permite un nuevo movimiento
+    // bloqueoDireccion = true; // Permite un nuevo movimiento
 
     // Mover el cuerpo
     for (let i = tamaño - 1; i > 0; i--) {
@@ -476,6 +497,8 @@ function bucleAnimacion(timestamp) {
         actualizarPosicionSerpiente();
         // 3) reinicio el tiempo
         tiempoUltimoMovimiento = timestamp;
+
+        bloqueoDireccion = true;
     }
     requestAnimationFrame(bucleAnimacion);
 }
