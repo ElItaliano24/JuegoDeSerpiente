@@ -33,8 +33,7 @@ body {
     justify-content: center;
 }
 
-.seccion_puntaje,
-.seccion_record {
+.seccion_puntaje, .seccion_record, .seccion_logo_UNDC, .seccion_logo_Sistemas {
     display: flex;
     height: 100%;
     justify-content: center;
@@ -49,8 +48,11 @@ body {
     margin-left: 5px;
 }
 
-.seccion_record {
+.seccion_record, .seccion_logo_UNDC {
     margin-left: 20px;
+}
+.seccion_logo_Sistemas {
+    margin-right: 20px;
 }
 
 #controles-tactiles {
