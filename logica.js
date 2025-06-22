@@ -146,6 +146,11 @@ function reiniciarEstadoJuego() {
     progresoAnimacion = 1;
     primeraComida = true;
 
+    colaDirecciones = []; // Reiniciar cola de direcciones
+    iniciado = false; // Reiniciar bandera de inicio
+    rutaSerpiente = new Path2D(); // Reiniciar ruta de la serpiente
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Limpiar el canvas
+
     // Reiniciar posiciones de la serpiente
     snakeX = [];
     snakeY = [];
@@ -167,6 +172,13 @@ function reiniciarEstadoJuego() {
 
     document.getElementById("puntaje").textContent = puntaje;
     juegoTerminadoModal.classList.add("hidden");
+
+    tiempoUltimoMovimiento = 0;
+    tiempoInicioRespiracion = null;
+    progresoAnimacion = 1;
+    anguloActualCabeza = orientacionCabezaDeSerpiente;
+    colaDirecciones = [];
+
     requestAnimationFrame(bucleAnimacion);
 }
 
