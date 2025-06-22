@@ -99,6 +99,24 @@ function ajustarTamañoCanvas() {
     }
 }
 
+function dibujarTablero() {
+    // Recorrer filas
+    for (let fila = 0; fila < filas; fila++) {
+        // Recorrer columnas
+        for (let col = 0; col < columnas; col++) {
+            // Alternar color como ajedrez
+            if ((fila + col) % 2 === 0) {
+                // Color claro
+                ctx.fillStyle = "#AEDBF0"
+            } else {
+                // Color oscuro
+                ctx.fillStyle = "#276678"
+            }
+            ctx.fillRect(col * celda, fila * celda, celda, celda)
+        }
+    }
+}
+
 function calcularAnguloCabezaSerpiente(dirX, dirY) {
     let angulo = 0;
     if (dirX === 1) angulo = 0;           // Derecha
@@ -117,9 +135,42 @@ function mostrarModalJuegoTerminado() {
     juegoTerminadoModal.classList.remove("hidden")
 }
 
-reiniciarJuego.addEventListener("click", () => {
-    location.reload();
-});
+function reiniciarEstadoJuego() {
+    tamaño = 3;
+    puntaje = 0;
+    dirX = 0;
+    dirY = 0;
+    juegoTerminado = false;
+    velocidad = 400;
+    intervaloMovimiento = velocidad;
+    progresoAnimacion = 1;
+    primeraComida = true;
+
+    // Reiniciar posiciones de la serpiente
+    snakeX = [];
+    snakeY = [];
+    posicionesPrevias = [];
+    const centroX = Math.floor(columnas / 2);
+    const centroY = Math.floor(filas / 2);
+    snakeX[0] = centroX - 3;
+    snakeY[0] = centroY;
+    for (let i = 1; i < tamaño; i++) {
+        snakeX[i] = snakeX[0] - i;
+        snakeY[i] = snakeY[0];
+    }
+    for (let i = 0; i < tamaño; i++) {
+        posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] }
+    }
+    recalcularAnchos();
+    construirRutaSerpiente();
+    generarComida();
+
+    document.getElementById("puntaje").textContent = puntaje;
+    juegoTerminadoModal.classList.add("hidden");
+    requestAnimationFrame(bucleAnimacion);
+}
+
+reiniciarJuego.addEventListener("click", reiniciarEstadoJuego);
 
 
 
@@ -156,24 +207,8 @@ construirRutaSerpiente()
 const conteoPuntajeMaximo = document.getElementById("record")
 conteoPuntajeMaximo.textContent = puntajeMaximo
 
-// Dibujar el tablero tipo ajedrez
-function dibujarTablero() {
-    // Recorrer filas
-    for (let fila = 0; fila < filas; fila++) {
-        // Recorrer columnas
-        for (let col = 0; col < columnas; col++) {
-            // Alternar color como ajedrez
-            if ((fila + col) % 2 === 0) {
-                // Color claro
-                ctx.fillStyle = "#AEDBF0"
-            } else {
-                // Color oscuro
-                ctx.fillStyle = "#276678"
-            }
-            ctx.fillRect(col * celda, fila * celda, celda, celda)
-        }
-    }
-}
+
+
 
 function dibujarCuerpoDeSerpiente(prog) {
     ctx.strokeStyle = "#A0C432";
@@ -230,9 +265,13 @@ function dibujarCuerpoDeSerpiente(prog) {
 
 
 function recalcularAnchos() {
-    anchos = []
+    anchos = [];
     const maxAncho = celda * 0.9;
     const minAncho = celda * 0.5;
+    if (tamaño === 1) {
+        anchos[0] = maxAncho;
+        return;
+    }
     for (let i = 0; i < tamaño; i++) {
         const t = i / (tamaño - 1);
         const t2 = t * t;
@@ -349,12 +388,41 @@ function dibujarComida(escala) {
 
 
 
+let colaDirecciones = []; // <-- ¡Asegúrate de que esto está declarado!
 // Mover y redibujar la serpiente
 function actualizarPosicionSerpiente() {
+    // Procesar la cola de direcciones antes de mover
+    if (colaDirecciones.length > 0) {
+        const direccion = colaDirecciones.shift();
+        switch (direccion) {
+            case "up":
+                if (dirY !== 1 || (dirX === 0 && dirY === 0)) {
+                    dirX = 0;
+                    dirY = -1;
+                }
+                break;
+            case "down":
+                if (dirY !== -1 || (dirX === 0 && dirY === 0)) {
+                    dirX = 0;
+                    dirY = 1;
+                }
+                break;
+            case "left":
+                if (dirX !== 1 || (dirX === 0 && dirY === 0)) {
+                    dirX = -1;
+                    dirY = 0;
+                }
+                break;
+            case "right":
+                if (dirX !== -1 || (dirX === 0 && dirY === 0)) {
+                    dirX = 1;
+                    dirY = 0;
+                }
+                break;
+        }
+    }
 
     if (dirX === 0 && dirY === 0) return;
-
-    // bloqueoDireccion = true; // Permite un nuevo movimiento
 
     // Mover el cuerpo
     for (let i = tamaño - 1; i > 0; i--) {
@@ -422,41 +490,12 @@ let intervalo = null; // aún no comienza el juego
 let iniciado = false; // bandera para detectar primer movimiento
 
 function mover(direccion) {
-
     if (!iniciado) {
         iniciado = true;
         requestAnimationFrame(bucleAnimacion); // Inicia la animación
     }
-
-    if (!bloqueoDireccion) return; // Si ya se está moviendo, no hacer nada
-    bloqueoDireccion = false; // Bloquea la dirección para evitar múltiples movimientos
-    switch (direccion) {
-        case "up":
-            if (dirY !== 1) {
-                dirX = 0;
-                dirY = -1;
-            }
-            break;
-        case "down":
-            if (dirY !== -1) {
-                dirX = 0;
-                dirY = 1;
-            }
-            break;
-        case "left":
-            if (dirX !== 1) {
-                dirX = -1;
-                dirY = 0;
-            }
-            break;
-        case "right":
-            if (dirX !== -1) {
-                dirX = 1;
-                dirY = 0;
-            }
-            break;
-    }
-
+    // Permite hasta 2 direcciones en la cola para mayor fluidez
+    if (colaDirecciones.length < 2) colaDirecciones.push(direccion);
 }
 
 document.addEventListener("keydown", event => {
@@ -464,11 +503,30 @@ document.addEventListener("keydown", event => {
         ArrowUp: "up",
         ArrowDown: "down",
         ArrowLeft: "left",
-        ArrowRight: "right"
+        ArrowRight: "right",
+        w: "up",
+        a: "left",
+        s: "down",
+        d: "right",
+        W: "up",
+        A: "left",
+        S: "down",
+        D: "right"
     };
     const dir = mapa[event.key];
     if (dir) mover(dir);
 });
+
+function actualizarLogicaJuego() {
+    actualizarPosicionSerpiente();
+}
+
+function renderizarJuego(progresoAnimacion, escalaComida) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dibujarTablero();
+    dibujarComida(escalaComida);
+    dibujarSerpiente(progresoAnimacion);
+}
 
 function bucleAnimacion(timestamp) {
     if (juegoTerminado) return; // Si el juego ha terminado, no continuar
@@ -482,11 +540,7 @@ function bucleAnimacion(timestamp) {
     const delta = timestamp - tiempoUltimoMovimiento;
     progresoAnimacion = Math.min(delta / intervaloMovimiento, 1);
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    dibujarTablero();
-    dibujarComida(escala);
-
-    dibujarSerpiente(progresoAnimacion);
+    renderizarJuego(progresoAnimacion, escala);
 
     if (delta >= intervaloMovimiento) {
         // 1) guardo estado “previo”
@@ -494,7 +548,7 @@ function bucleAnimacion(timestamp) {
             posicionesPrevias[i] = { x: snakeX[i], y: snakeY[i] };
         }
         // 2) muevo la lógica de la serpiente
-        actualizarPosicionSerpiente();
+        actualizarLogicaJuego();
         // 3) reinicio el tiempo
         tiempoUltimoMovimiento = timestamp;
 
@@ -503,15 +557,13 @@ function bucleAnimacion(timestamp) {
     requestAnimationFrame(bucleAnimacion);
 }
 
-
 let toqueX = 0
 let toqueY = 0
 const umbralSwipe = 30; // Umbral para detectar swipe
 
-
 canvas.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1) return; // Asegurarse de que solo hay un toque{
-    e.preventDefault()
+    if (e.touches.length !== 1) return; // Asegurarse de que solo hay un toque
+    e.preventDefault();
     const t = e.touches[0];
     toqueX = t.clientX;
     toqueY = t.clientY;
@@ -519,12 +571,12 @@ canvas.addEventListener("touchstart", (e) => {
 
 canvas.addEventListener("touchend", (e) => {
     if (!e.changedTouches || e.changedTouches.length !== 1) return; // Asegurarse de que solo hay un toque
-    e.preventDefault()
+    e.preventDefault();
     const t = e.changedTouches[0];
     const dx = t.clientX - toqueX;
     const dy = t.clientY - toqueY;
 
-    if (Math.abs(dx) < umbralSwipe && Math.abs(dy) < umbralSwipe) return
+    if (Math.abs(dx) < umbralSwipe && Math.abs(dy) < umbralSwipe) return;
 
     if (Math.abs(dx) > Math.abs(dy)) {
         // Movimiento horizontal
