@@ -180,7 +180,7 @@ function reiniciarEstadoJuego() {
     colaDirecciones = [];
 
     requestAnimationFrame(bucleAnimacion);
-}
+}   
 
 reiniciarJuego.addEventListener("click", reiniciarEstadoJuego);
 
